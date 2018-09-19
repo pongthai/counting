@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>OpenCV.js</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+<style type="text/css">
+	/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000;
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 ) 
+                url('http://i.stack.imgur.com/FhHRx.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;   
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+    display: block;
+}
+
+
+</style>
+</head>
+<body>
+<div class="container">
+	<div class="jumbotron">
+    	<h1>Circle Detection</h1> 
+    	<p>This is a prototype of Circle Detection</p> 
+  	</div>
+  	
+  	<div class="row">
+  	</div>
+	<div class="row">
+  		<div class="col-sm">
+  			<div class="card">
+			  	<div class="card-header">
+			    Original Image
+			  	</div>
+			  	<div class="card-block text-center">
+			    	<img id="imageOriginal" alt="Upload" />
+			  	</div>
+			  	<div class="card-footer text-muted">
+			    	<input type="file" id="imageInput" name="file" />
+			  	</div>
+			</div>
+  		</div>
+  		<div class="col-sm">
+  			<div class="card">
+			  	<div class="card-header">
+			    Modified Image
+			  	</div>
+			  	<div class="card-block">
+			    	<canvas id="imageCanvas" onclick="add_remove_circle(event)"></canvas>
+			  	</div>
+
+			  	<ul class="list-group list-group-flush">
+			  		
+			  		<div class="card">
+			  			<div class="card-header">
+			    			Add/Remove
+			  			</div>
+			  			<div class="card-block text-left">
+				  			<b>Radius</b>: <input type="text" id="txt_radius" value="20" size="3"><br>
+				  			<label >
+	  							<input type="radio" checked="checked" name="radio" id="rad_none">
+	  							<span >None</span>
+							</label>
+							<br>
+				  			<label >
+	  							<input type="radio" name="radio" id="rad_add">
+	  							<span >Add Circle</span>
+							</label>
+							<br>
+							<label >
+	  							<input type="radio" name="radio" id="rad_remove">
+	  							<span >Remove Circle</span>
+							</label>
+						</div>							
+			  		</div>
+			  		<div class="card">
+			  			<div class="card-header">
+			    			Parameters
+			  			</div>
+			  			<div class="card-block text-left">
+			  				<b>line width</b>:<input type="text" id="txt_linew" value="1" size="4"><br>
+  							<b>min dist</b>: <input type="text" id="txt_mindist" value="15" size="4"><br>
+			    				<b>Param1</b>: <input type="text" id="txt_param1" value="150" size="4" ><br>
+			    				<b>Param2</b>: <input type="text" id="txt_param2" value="20" size="4"><br>
+			    				<b>min Radius</b>: <input type="text" id="txt_minRas" value="10" size="4"><br>
+			    				<b>max Radius</b>: <input type="text" id="txt_maxRas" value="30" size="4"><br>
+							<input type="checkbox" id="Chk_Resize" checked="checked">Resize Image 
+							<b>Size</b>: <input type="text" id="txt_Size" value="800" size="4"><br>
+
+			  			</div>
+			  		</div>
+
+				    <li class="list-group-item">
+				    	<button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
+				    	<label id="lbl_status">..</label>
+				    </li>
+				</ul>
+				<div class="card-footer">
+				    <a href="#" id="button" class="card-link">Download Image</a>
+				</div>
+			</div>
+  		</div>
+  	</div>
+</div>
+<div class="modal"></div>
+<script type="text/javascript">
+document.body.classList.add("loading");
+
+let imgElement = document.getElementById('imageOriginal');
+let inputElement = document.getElementById('imageInput');
+inputElement.addEventListener('change', (e) => {
+  imgElement.src = URL.createObjectURL(e.target.files[0]);
+}, false);
+let mat;
+let arrCircles;
+var dst_org;
+
+imgElement.onload = function() {
+  /*src = cv.imread(imgElement);
+  height = src.size().height;
+  width = src.size().width;
+  
+  let max_a = 800;
+  let mat = new cv.Mat();
+
+  if (height>width){
+  	let scale = height/max_a;
+  	
+	let dsize = new cv.Size(Math.round(width/scale), max_a);
+	cv.resize(src, mat, dsize, 0, 0, cv.INTER_AREA);
+
+  }else{
+  	let scale = width/max_a;
+	let dsize = new cv.Size(max_a,Math.round(height/scale));
+	cv.resize(src, mat, dsize, 0, 0, cv.INTER_AREA);
+  }
+
+  cv.imshow('imageCanvas', mat);
+  */
+  document.getElementById('circlesButton').disabled = false;
+  document.getElementById('lbl_status').innerHTML = "Ready";
+
+
+};
+
+function IsResize() {
+    var checkBox = document.getElementById("Chk_Resize");
+    var text = document.getElementById("txt_Size");
+    if (checkBox.checked == true){
+        text.style.display = "block";
+    } else {
+       text.style.display = "none";
+    }
+}
+
+function DrawCircles(dst1,circles){
+	// draw circles
+        let cnt = 0;
+	let dst = dst1.clone();
+	let line_width = parseInt(document.getElementById("txt_linew").value);	
+        for (let i = 0; i < circles.length; ++i) {
+        	let x = circles[i]["x"];
+        	let y = circles[i]["y"];
+        	let radius = circles[i]["radius"];
+		let type = circles[i]["type"];
+
+        	let center = new cv.Point(x, y);
+        	if ( type == 1){
+			cv.circle(dst, center, radius, [0, 255, 0, 255], line_width);
+        		cv.circle(dst, center,1 ,[0, 0, 255,255],1);
+        	}else{
+			cv.circle(dst, center, radius, [0, 0, 255, 255], line_width);
+                        cv.circle(dst, center,1 ,[0, 0, 255,255],1);
+		}
+
+		cnt = cnt+1;
+        	let p1 = new cv.Point(x,y);
+        	cv.putText(dst,String(cnt)+"/"+String(Math.round(radius)), p1,cv.FONT_HERSHEY_SIMPLEX,0.3,[255,255,255,255],1);
+	}
+	
+
+        let p2 = new cv.Point(width/3,30);
+
+        cv.putText(dst ,"Count = "+ String (cnt), p2,cv.FONT_HERSHEY_SIMPLEX,1,[0,255,0,255],2);
+        cv.imshow('imageCanvas', dst);
+	dst.delete();
+}
+
+document.getElementById('circlesButton').onclick = function() {
+	this.disabled = true;
+
+
+	//reset array Circles
+	arrCircles = [];
+
+	let mat = cv.imread(imgElement);
+	
+  	height = mat.size().height;
+  	width = mat.size().width;
+  
+
+  	let max_a = parseInt(document.getElementById("txt_Size").value);
+
+	let chkResize = document.getElementById("Chk_Resize");
+	if ( chkResize.checked){	
+  		if (height>width){
+  			let scale = height/max_a;
+  	
+			let dsize = new cv.Size(Math.round(width/scale), max_a);
+			cv.resize(mat, mat, dsize, 0, 0, cv.INTER_AREA);
+
+  		}else{
+  			let scale = width/max_a;
+			let dsize = new cv.Size(max_a,Math.round(height/scale));
+			cv.resize(mat, mat, dsize, 0, 0, cv.INTER_AREA);
+  		}
+	}
+
+  	cv.imshow('imageCanvas', mat);
+
+  	//let mat = cv.imread('imageCanvas');
+	dst_org = mat.clone();
+	let circles = new cv.Mat();
+
+	cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY, 0);
+
+	height = mat.size().height;
+	width = mat.size().width;
+
+	let ksize = new cv.Size(5, 5);
+	// You can try more different parameters
+	cv.GaussianBlur(mat, mat, ksize, 0, 0, cv.BORDER_DEFAULT);
+	cv.medianBlur(mat, mat, 5);
+
+	var minDist = parseInt(document.getElementById("txt_mindist").value);
+	var param1 = parseInt(document.getElementById("txt_param1").value);
+	var param2 = parseInt(document.getElementById("txt_param2").value);
+	var minRas = parseInt(document.getElementById("txt_minRas").value);
+	var maxRas = parseInt(document.getElementById("txt_maxRas").value);
+
+	// You can try more different parameters
+	cv.HoughCircles(mat, circles, cv.HOUGH_GRADIENT,
+                1, minDist,  param1,param2, minRas, maxRas);
+
+	document.getElementById('circlesButton').disabled = true;
+	document.getElementById('lbl_status').innerHTML = "Processing...";
+	
+	for (let i = 0; i < circles.cols; i++){
+		let circle = [];
+	
+		circle["x"] = circles.data32F[i * 3];
+        	circle["y"] = circles.data32F[i * 3 + 1];
+        	circle["radius"] = circles.data32F[i * 3 + 2];
+		circle["type"] = 1; //1 = auto, 0 = manual
+
+		arrCircles.push(circle);
+	}
+
+	// draw circles
+	DrawCircles(dst_org,arrCircles);	
+
+	/*cnt = 0;
+	for (let i = 0; i < circles.cols; ++i) {
+    	let x = circles.data32F[i * 3];
+    	let y = circles.data32F[i * 3 + 1];
+    	let radius = circles.data32F[i * 3 + 2];
+    	let center = new cv.Point(x, y);
+    	cv.circle(dst, center, radius, [0, 255, 0, 255], 2);
+
+    	cv.circle(dst, center,1 ,[0, 0, 255,255],1)
+        cnt = cnt+1
+
+        let p1 = new cv.Point(x,y);
+        cv.putText(dst,String(cnt)+"/"+String(Math.round(radius)), p1,cv.FONT_HERSHEY_SIMPLEX,0.3,[255,255,255,255],1)
+
+	}
+	let p2 = new cv.Point(width/2,30);
+	cv.putText(dst,"("+ String(height)+","+String(width)+") : " + "Count = "+ String (cnt), p2,cv.FONT_HERSHEY_SIMPLEX,0.5,[255,255,255,255],1)
+	cv.imshow('imageCanvas', dst);
+	*/
+	document.getElementById('circlesButton').disabled = false;
+	document.getElementById('lbl_status').innerHTML = "Ready";
+
+	mat.delete();
+	circles.delete();
+	//frame.delete();
+	this.disabled = false;
+
+};
+
+document.getElementById('button').onclick = function() {
+    this.href = document.getElementById("imageCanvas").toDataURL();
+    this.download = "image.png";
+};
+
+function onOpenCvReady() {
+  document.body.classList.remove("loading");
+}
+
+
+function add_remove_circle(e) {
+
+    var canvas = document.getElementById('imageCanvas');
+    var context = canvas.getContext("2d"); 
+    let ras = parseInt(document.getElementById('txt_radius').value);
+    var pos = getMousePos(canvas, e);
+    posx = pos.x;
+    posy = pos.y;
+
+   var RadAddRemove = document.getElementById('rad_action');
+
+   //Remove Circle	   
+   if (document.getElementById('rad_remove').checked ){
+	
+   for (let i = 0 ; i < arrCircles.length ; i++){
+	let x = arrCircles[i]["x"];
+	let y = arrCircles[i]["y"];
+	let r = arrCircles[i]["radius"];
+ 
+	dist = Math.sqrt((x-posx)*(x-posx)+(y-posy)*(y-posy));
+	if ( dist <= r ){
+		//context.fillStyle = "#FF0000";
+		//context.beginPath();
+		//context.arc(x, y, r, 0, 2*Math.PI);
+		//context.fill();
+		arrCircles.splice(i,1);	
+		DrawCircles(dst_org,arrCircles);	
+		break;
+	}
+   }
+   // Add Circle
+   }else if (document.getElementById('rad_add').checked ){
+   	let newCircle = [];
+	newCircle["x"] = posx;
+	newCircle["y"] = posy;
+	newCircle["radius"] = ras;
+	newCircle["type"] = 0;
+	arrCircles.push(newCircle);
+	DrawCircles(dst_org,arrCircles);
+   }else{
+	//do nothing
+   }
+	
+
+   
+}
+
+function getMousePos(canvas, evt) {
+
+    var rect = canvas.getBoundingClientRect();
+    return {
+      x: evt.clientX - rect.left,
+      y: evt.clientY - rect.top
+    };
+}
+
+
+
+</script>
+<script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+</body>
+</html>
