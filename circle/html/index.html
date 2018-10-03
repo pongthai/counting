@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <title>Circle Detection v0.1.2</title>
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+<link href="rect.css" rel="stylesheet" type="text/css">
+
+
 <style type="text/css">
 	/* Start by setting display:none to make this hidden.
    Then we position it in relation to the viewport window
@@ -13,7 +17,7 @@
 .modal {
     display:    none;
     position:   fixed;
-    z-index:    1000;
+    z-index:    1000
     top:        0;
     left:       0;
     height:     100%;
@@ -42,7 +46,7 @@ body.loading .modal {
 <body>
 <div class="container">
 	<div class="jumbotron">
-    	<h1>Circle Detection</h1> 
+    	<h3>Circle Detection</h3> 
     	<p>This is a prototype of Circle Detection</p> 
   	</div>
   	
@@ -51,12 +55,25 @@ body.loading .modal {
 	<div class="row">
   		<div class="col-sm">
   			<div class="card">
+				<div id="navbar">
+					<button type="button" onclick="Img_zoomin()"> Zoom In</button>
+					<button type="button" onclick="Img_zoomout()"> Zoom Out</button>
+				</div>
+
 			  	<div class="card-header">
 			    Original Image
 			  	</div>
-			  	<div class="card-block text-center">
-			    	<img id="imageOriginal" alt="Upload" />
-			  	</div>
+			  	<div class="card-block">
+				<canvas id="orgCanvas"></canvas>
+			    	 </div>
+				<div>
+ 					<img id="imageOriginal" style="display: none;" />
+				</div>
+				<div>
+				<canvas id="inputCanvas"></canvas>
+				
+				</div>
+				<div> <label id="mouse_result">test - output</label>  </div>			
 			  	<div class="card-footer text-muted">
 			    	<input type="file" id="imageInput" name="file" />
 			  	</div>
@@ -72,7 +89,11 @@ body.loading .modal {
 			  	</div>
 
 			  	<ul class="list-group list-group-flush">
-			  		
+			 	    <li class="list-group-item">
+                                        <button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
+                                        <label id="lbl_status">..</label>
+                                    </li>
+	
 			  		<div class="card">
 			  			<div class="card-header">
 			    			Add/Remove
@@ -101,21 +122,27 @@ body.loading .modal {
 			  			</div>
 			  			<div class="card-block text-left">
 			  				<b>line width</b>:<input type="text" id="txt_linew" value="1" size="4"><br>
-  							<b>min dist</b>: <input type="text" id="txt_mindist" value="15" size="4"><br>
+  							<b>min dist</b>: <input type="text" id="txt_mindist" value="20" size="4"><br>
 			    				<b>Param1</b>: <input type="text" id="txt_param1" value="150" size="4" ><br>
-			    				<b>Param2</b>: <input type="text" id="txt_param2" value="20" size="4"><br>
-			    				<b>min Radius</b>: <input type="text" id="txt_minRas" value="10" size="4"><br>
-			    				<b>max Radius</b>: <input type="text" id="txt_maxRas" value="30" size="4"><br>
-							<input type="checkbox" id="Chk_Resize" checked="checked">Resize Image 
-							<b>Size</b>: <input type="text" id="txt_Size" value="800" size="4"><br>
+			    				<b>Param2</b>: <input type="text" id="txt_param2" value="15" size="4"><br>
+			    				<b>min Radius</b>: <input type="text" id="txt_minRas" value="15" size="4"><br>
+			    				<b>max Radius</b>: <input type="text" id="txt_maxRas" value="25" size="4"><br>
+							<input type="checkbox" id="Chk_Resize"><b>Scale Image</b> 
+							<b>Scale (0.1-1.0)</b>: <input type="text" id="txt_Scale" value="0.5" size="4"><br>
 
 			  			</div>
-			  		</div>
+			  		</div
+					<div class="card">
+                                                <div class="card-header">
+                                                Output Display
+                                                </div>
+                                                <div class="card-block text-left">
+                                                        <b>Font Size</b>:<input type="text" id="txt_disp_fontsize" value="0.6" size="4"><br>
+                                                        <b>Comment Text</b>: <input type="text" id="txt_Comment" value="<put comment here>" size="4"><br>
+                                                </div>
+                                        </div>
 
-				    <li class="list-group-item">
-				    	<button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
-				    	<label id="lbl_status">..</label>
-				    </li>
+
 				</ul>
 				<div class="card-footer">
 				    <a href="#" id="button" class="card-link">Download Image</a>
@@ -126,16 +153,153 @@ body.loading .modal {
 </div>
 <div class="modal"></div>
 <script type="text/javascript">
+
+
+function FindPosition(oElement)
+{
+  if(typeof( oElement.offsetParent ) != "undefined")
+  {
+    for(var posX = 0, posY = 0; oElement; oElement = oElement.offsetParent)
+    {
+      posX += oElement.offsetLeft;
+      posY += oElement.offsetTop;
+    }
+      return [ posX, posY ];
+    }
+    else
+    {
+      return [ oElement.x, oElement.y ];
+    }
+}
+
+var mousedown = false;
+var last_mousex = last_mousey = 0;
+var mousex = mousey = 0;
+var mousedown = false;
+var rectROI;
+
+
+function initDraw(canvas) {
+    var mouse = {
+        x: 0,
+        y: 0,
+        startX: 0,
+        startY: 0,
+	offSetX: 0,
+	offSetY: 0
+    };
+    function setMousePosition(e) {
+        var ev = e || window.event; //Moz || IE
+        if (ev.pageX) { //Moz
+            mouse.x = ev.pageX + window.pageXOffset;
+            mouse.y = ev.pageY + window.pageYOffset;
+        } else if (ev.clientX) { //IE
+            mouse.x = ev.clientX + document.body.scrollLeft;
+            mouse.y = ev.clientY + document.body.scrollTop;
+        }
+	let ImgPos = FindPosition(inputCanvas);
+	mouse.offSetX = ImgPos[0];
+	mouse.offSetY = ImgPos[1];
+
+    };
+    var element = null;
+
+   canvas.onmousedown = function (e) {
+	setMousePosition(e);
+
+	last_mousex = parseInt(e.pageX-mouse.offSetX);
+	last_mousey = parseInt(e.pageY-mouse.offSetY);
+    	mousedown = true;
+
+
+   }
+   canvas.onmouseup = function (e) {
+	mousedown = false;
+   }
+
+    canvas.onmousemove = function (e) {
+        setMousePosition(e);
+	let x = e.pageX - mouse.offSetX;
+	let y = e.pageY - mouse.offSetY;
+        /*if (element !== null) {
+            element.style.width = Math.abs(mouse.x - mouse.startX) + 'px';
+            element.style.height = Math.abs(mouse.y - mouse.startY) + 'px';
+            element.style.left = (mouse.x - mouse.startX < 0) ? mouse.x - mouse.offSetX + 'px' : mouse.startX - mouse.offSetX + 'px';
+            element.style.top = (mouse.y - mouse.startY < 0) ? mouse.y - mouse.offSetY + 'px' : mouse.startY-mouse.offSetY + 'px';
+        }*/
+	if ( mousedown == true && ( x>last_mousex ) && (y>last_mousey) ){
+
+	var ctx = canvas.getContext('2d');
+	ctx.clearRect(0,0,canvas.width,canvas.height); //clear canvas
+        //let dst = dsp_org.clone();
+	let p1 = new cv.Point(last_mousex,last_mousey);
+        let p2 = new cv.Point(x,y);
+        let dsp = dsp_org.clone();
+        cv.rectangle(dsp,p1,p2,[0,255,0,255],1);
+	
+	rectROI = new cv.Rect(last_mousex,last_mousey, x - last_mousex, y - last_mousey);
+        //console.log ("rectROI = [" + last_mousex + "," + last_mousey + "," + x + "," + y + "]"):
+        cv.imshow('inputCanvas',dsp); 
+	dsp.delete();
+        //ctx.beginPath();
+        //var width = x - last_mousex;
+        //var height = y - last_mousey;
+        //ctx.rect(last_mousex,last_mousey,width,height);
+        //ctx.strokeStyle = 'black';
+        //ctx.lineWidth = 10;
+        //ctx.stroke();
+	}
+	document.getElementById('mouse_result').innerHTML = "(" + String(last_mousex) + "," + String(last_mousey) + ") - (" + x + "," + y + ")";
+		
+
+    }
+    canvas.onclick = function (e) {
+        if (element !== null) {
+           // element = null;
+           // canvas.style.cursor = "default";
+          //  console.log("finsihed.");
+        } else {
+          //  console.log("begun.");
+         //   mouse.startX = mouse.x;
+          //  mouse.startY = mouse.y;
+          //  element = document.createElement('div');
+            //element.className = 'rectangle'
+            //element.style.left = mouse.x  - mouse.offSetX+ 'px';
+            //element.style.top = mouse.y  - mouse.offSetY+ 'px';
+            //canvas.appendChild(element)
+	   // let p1 = new cv.Point(e.pageX - mouse.offSetX);
+           // let p2 = new cv.Point(e.pageY - mouse.offSetY);
+	    //let dst = dsp_org.clone();
+	   // cv.rectangle(dst,p1,p2,[0,255,0,255],1);
+	    
+	   // cv.imshow('orgCanvas',dst);			
+
+	    //dst.delete();
+	   // p1.delete();
+	   // p2.delete();
+           // canvas.style.cursor = "crosshair";
+        }
+    }
+}
+
+
+
 document.body.classList.add("loading");
 
 let imgElement = document.getElementById('imageOriginal');
 let inputElement = document.getElementById('imageInput');
+let inputCanvas = document.getElementById('inputCanvas');
+let imageCanvas = document.getElementById("imageCanvas");
 inputElement.addEventListener('change', (e) => {
   imgElement.src = URL.createObjectURL(e.target.files[0]);
 }, false);
 let mat;
 let arrCircles;
-var dst_org;
+let dst_org = null;
+let gb_count=0 ;
+let Img_scale = 1.0;
+let zoom_factor = 1.0;
+let dsp_org = null;
 
 imgElement.onload = function() {
   /*src = cv.imread(imgElement);
@@ -161,13 +325,88 @@ imgElement.onload = function() {
   */
   document.getElementById('circlesButton').disabled = false;
   document.getElementById('lbl_status').innerHTML = "Ready";
+  imgElement.style.cursor="crosshair";
+
+  //if (dst_org != null) dst_org.delete();
+	
+  dst_org = cv.imread(imgElement);
+  dsp_org = dst_org.clone();
+  cv.imshow('inputCanvas',dst_org);
+  zoom_factor = dst_org.size().width/imgElement.style.width;
+
+  rectROI = new cv.Rect(0,0,dst_org.size().width,dst_org.size().height);
+
+  initDraw(document.getElementById('inputCanvas'));
 
 
 };
 
+function Img_zoomin(){
+        var currWidth = inputCanvas.clientWidth;
+        var currHeight = inputCanvas.clientHeight;
+        if(currWidth > 2500) return false;
+                 else{
+            var newWidth = currWidth + 100;
+            var scale = parseFloat(newWidth/currWidth);
+	    var newHeight = parseInt(currHeight*scale);  
+            //inputCanvas.style.width = newWidth + "px";
+           // inputCanvas.style.height = newHeight + "px";
+            zoom_factor = dst_org.size().width/newWidth;
+            let dsize = new cv.Size(newWidth,newHeight);
+            rectROI = new cv.Rect (parseInt(rectROI.x*scale),parseInt(rectROI.y*scale),parseInt(rectROI.width*scale),parseInt(rectROI.height*scale));
+            if (dsp_org != null) dsp_org.delete();
+            
+            dsp_org = dst_org.clone();
+           
+            cv.resize(dsp_org, dsp_org, dsize, 0, 0, cv.INTER_AREA);
+            let p1 = new cv.Point(rectROI.x,rectROI.y);
+            let p2 = new cv.Point(rectROI.x + rectROI.width,rectROI.y + rectROI.height);
+            cv.rectangle(dsp_org,p1,p2,[0,255,0,255],1);
+            cv.imshow ("inputCanvas",dsp_org);  
+            console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
+
+	
+	    	
+        }
+ 	
+
+ };
+ 
+function Img_zoomout(){
+        //var myImg = document.getElementById("map");
+        var currWidth = inputCanvas.clientWidth;
+	var currHeight = inputCanvas.clientHeight;
+	if(currWidth < 100) return false;
+		 else{
+	    var newWidth = currWidth - 100;
+            var scale =  parseFloat(newWidth/currWidth);
+	    var newHeight = parseInt(currHeight*scale);	
+            //inputCanvas.style.width = newWidth + "px";
+	    //inputCanvas.style.height = newHeight + "px";
+
+	    zoom_factor = dst_org.size().width/newWidth;
+            let dsize = new cv.Size(newWidth,newHeight);
+
+	    rectROI = new cv.Rect (parseInt(rectROI.x*scale),parseInt(rectROI.y*scale),parseInt(rectROI.width*scale),parseInt(rectROI.height*scale));
+	    if (dsp_org != null) dsp_org.delete();
+            
+	    dsp_org = dst_org.clone();
+	   
+	    cv.resize(dsp_org, dsp_org, dsize, 0, 0, cv.INTER_AREA);
+	    let p1 = new cv.Point(rectROI.x,rectROI.y);
+            let p2 = new cv.Point(rectROI.x + rectROI.width,rectROI.y + rectROI.height);
+            cv.rectangle(dsp_org,p1,p2,[0,255,0,255],1);
+
+	    cv.imshow ("inputCanvas",dsp_org);	
+	    console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
+	
+        }
+
+ };
+
 function IsResize() {
     var checkBox = document.getElementById("Chk_Resize");
-    var text = document.getElementById("txt_Size");
+    var text = document.getElementById("txt_Scale");
     if (checkBox.checked == true){
         text.style.display = "block";
     } else {
@@ -175,11 +414,23 @@ function IsResize() {
     }
 }
 
-function DrawCircles(dst1,circles){
+
+function DrawCircles(src,circles){
 	// draw circles
         let cnt = 0;
-	let dst = dst1.clone();
+	let hd = 25;
+
+	let dst = src.clone();
+	let h = dst.size().height;
+	let w = dst.size().width;
+
+	//let dsize = new cv.Size(Math.round(w*Img_scale), Math.round(h*Img_scale));
+	//cv.resize(dst, dst, dsize, 0, 0, cv.INTER_AREA);
+	
+
 	let line_width = parseInt(document.getElementById("txt_linew").value);	
+	let disp_fontsize = parseFloat(document.getElementById("txt_disp_fontsize").value);
+	let txt_Comment = document.getElementById("txt_Comment").value;
         for (let i = 0; i < circles.length; ++i) {
         	let x = circles[i]["x"];
         	let y = circles[i]["y"];
@@ -197,15 +448,35 @@ function DrawCircles(dst1,circles){
 
 		cnt = cnt+1;
         	let p1 = new cv.Point(x,y);
-        	cv.putText(dst,String(cnt)+"/"+String(Math.round(radius)), p1,cv.FONT_HERSHEY_SIMPLEX,0.3,[255,255,255,255],1);
+        	cv.putText(dst,String(cnt)+"/"+String(Math.round(radius)), p1,cv.FONT_HERSHEY_TRIPLEX,0.3,[255,255,255,255],1);
 	}
-	
+        //clear header
+	for (let i = 0; i < hd; i++) {
+          for (let j = 0; j < dst.size().width; j++) {
+            dst.ucharPtr(i, j)[0] = 255;
+            dst.ucharPtr(i, j)[1] = 255;
+            dst.ucharPtr(i, j)[2] = 255;
 
-        let p2 = new cv.Point(width/3,30);
+         }
+        }
+	// get a new date (locale machine date time)
+	var date = new Date();
+	// get the date as a string
+	var n = date.toDateString();
+	// get the time as a string
+	var time = date.toLocaleTimeString();
 
-        cv.putText(dst ,"Count = "+ String (cnt), p2,cv.FONT_HERSHEY_SIMPLEX,1,[0,255,0,255],2);
-        cv.imshow('imageCanvas', dst);
+        let pos1 = new cv.Point(10,20);
+	let pos2 = new cv.Point(10,30);
+        let pos3 = new cv.Point(10,40);
+
+        cv.putText(dst ,"Count : "+ String (cnt), pos1,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize,[0,0,255,255],1);
+        //cv.putText(dst ,"Date/Time : " + n + "--"+time, pos2,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize,[0,0,0,255],1);
+	//cv.putText(dst ,"Comment : "+ txt_Comment, pos3 ,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize,[0,0,0,255],1);
+
+	cv.imshow('imageCanvas', dst);
 	dst.delete();
+
 }
 
 document.getElementById('circlesButton').onclick = function() {
@@ -215,17 +486,20 @@ document.getElementById('circlesButton').onclick = function() {
 	//reset array Circles
 	arrCircles = [];
 
-	let mat = cv.imread(imgElement);
-	
+	//let mat = cv.imread(imgElement);
+	let mat = dsp_org.roi(rectROI);
+
   	height = mat.size().height;
   	width = mat.size().width;
   
 
-  	let max_a = parseInt(document.getElementById("txt_Size").value);
+  	let scale = parseFloat(document.getElementById("txt_Scale").value);
 
 	let chkResize = document.getElementById("Chk_Resize");
-	if ( chkResize.checked){	
-  		if (height>width){
+	if ( chkResize.checked){
+		Img_scale = scale;
+
+  		/*if (height>width){
   			let scale = height/max_a;
   	
 			let dsize = new cv.Size(Math.round(width/scale), max_a);
@@ -235,13 +509,19 @@ document.getElementById('circlesButton').onclick = function() {
   			let scale = width/max_a;
 			let dsize = new cv.Size(max_a,Math.round(height/scale));
 			cv.resize(mat, mat, dsize, 0, 0, cv.INTER_AREA);
-  		}
+  		}*/
+
+		let dsize = new cv.Size(Math.round(width*scale), Math.round(height*scale));
+		cv.resize(mat, mat, dsize, 0, 0, cv.INTER_AREA);
+
+	}else{
+		Img_scale = 1.0;
 	}
 
   	cv.imshow('imageCanvas', mat);
 
   	//let mat = cv.imread('imageCanvas');
-	dst_org = mat.clone();
+	//dst_org = mat.clone();
 	let circles = new cv.Mat();
 
 	cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY, 0);
@@ -266,6 +546,7 @@ document.getElementById('circlesButton').onclick = function() {
 
 	document.getElementById('circlesButton').disabled = true;
 	document.getElementById('lbl_status').innerHTML = "Processing...";
+	//document.getElementById("imageCanvas").style.cursor="crosshair";
 	
 	for (let i = 0; i < circles.cols; i++){
 		let circle = [];
@@ -279,7 +560,7 @@ document.getElementById('circlesButton').onclick = function() {
 	}
 
 	// draw circles
-	DrawCircles(dst_org,arrCircles);	
+	DrawCircles(dsp_org.roi(rectROI),arrCircles);	
 
 	/*cnt = 0;
 	for (let i = 0; i < circles.cols; ++i) {
