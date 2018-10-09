@@ -56,29 +56,38 @@ body.loading .modal {
   		<div class="col-sm">
   			<div class="card">
 				<div id="navbar">
-					<button type="button" onclick="Img_zoomin()"> Zoom In</button>
-					<button type="button" onclick="Img_zoomout()"> Zoom Out</button>
+					<button type="button" onclick="Img_zoomin()"><img src="./images/zoomin.png" width="50%" height="50%"  /></button>
+					<button type="button" onclick="Img_zoomout()"><img src="./images/zoomout.png" width="50%" height="50%" /></button>
 				</div>
 
 			  	<div class="card-header">
 			    Original Image
 			  	</div>
 			  	<div class="card-block">
-				<canvas id="orgCanvas"></canvas>
+				<canvas id="orgCanvas" width ="0" height = "0"></canvas>
 			    	 </div>
 				<div>
  					<img id="imageOriginal" style="display: none;" />
 				</div>
 				<div>
-				<canvas id="inputCanvas"></canvas>
+				<canvas id="inputCanvas" width ="0" height = "0"></canvas>
 				
 				</div>
-				<div> <label id="mouse_result">test - output</label>  </div>			
+				<div> <label id="mouse_result"></label>  </div>			
 			  	<div class="card-footer text-muted">
 			    	<input type="file" id="imageInput" name="file" />
 			  	</div>
 			</div>
   		</div>
+	        <div style="visibility: hidden">
+                        <div style="visibility: hidden">
+			  <div  style="visibility: hidden">
+                             <canvas id="debugCanvas" width="0" height="0"></canvas>
+	`
+                          </div>
+
+			</div>
+  	 	</div>
   		<div class="col-sm">
   			<div class="card">
 			  	<div class="card-header">
@@ -138,14 +147,14 @@ body.loading .modal {
                                                 </div>
                                                 <div class="card-block text-left">
                                                         <b>Font Size</b>:<input type="text" id="txt_disp_fontsize" value="0.6" size="4"><br>
-                                                        <b>Comment Text</b>: <input type="text" id="txt_Comment" value="<put comment here>" size="4"><br>
+                                                        <b>Comment Text</b>: <input type="text" id="txt_Comment" value="" size="50"><br>
                                                 </div>
                                         </div>
 
 
 				</ul>
 				<div class="card-footer">
-				    <a href="#" id="button" class="card-link">Download Image</a>
+				    <a href="#" id="button" class="btn btn-primary">Download Image</a>
 				</div>
 			</div>
   		</div>
@@ -235,7 +244,7 @@ function initDraw(canvas) {
 	let p1 = new cv.Point(last_mousex,last_mousey);
         let p2 = new cv.Point(x,y);
         let dsp = dsp_org.clone();
-        cv.rectangle(dsp,p1,p2,[0,255,0,255],1);
+        cv.rectangle(dsp,p1,p2,[255,0,0,255],2);
 	
 	rectROI = new cv.Rect(last_mousex,last_mousey, x - last_mousex, y - last_mousey);
         //console.log ("rectROI = [" + last_mousex + "," + last_mousey + "," + x + "," + y + "]"):
@@ -338,7 +347,7 @@ imgElement.onload = function() {
 
   initDraw(document.getElementById('inputCanvas'));
 
-
+ //document.getElementById('debugCanvas').style.visibility = "hidden";
 };
 
 function Img_zoomin(){
@@ -361,10 +370,11 @@ function Img_zoomin(){
             cv.resize(dsp_org, dsp_org, dsize, 0, 0, cv.INTER_AREA);
             let p1 = new cv.Point(rectROI.x,rectROI.y);
             let p2 = new cv.Point(rectROI.x + rectROI.width,rectROI.y + rectROI.height);
-            cv.rectangle(dsp_org,p1,p2,[0,255,0,255],1);
-            cv.imshow ("inputCanvas",dsp_org);  
+            let dsp = dsp_org.clone();
+	    cv.rectangle(dsp,p1,p2,[0,255,0,255],1);
+            cv.imshow ("inputCanvas",dsp);  
             console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
-
+	    dsp.delete();
 	
 	    	
         }
@@ -395,11 +405,12 @@ function Img_zoomout(){
 	    cv.resize(dsp_org, dsp_org, dsize, 0, 0, cv.INTER_AREA);
 	    let p1 = new cv.Point(rectROI.x,rectROI.y);
             let p2 = new cv.Point(rectROI.x + rectROI.width,rectROI.y + rectROI.height);
-            cv.rectangle(dsp_org,p1,p2,[0,255,0,255],1);
+	    let dsp = dsp_org.clone();
+            cv.rectangle(dsp,p1,p2,[0,255,0,255],1);
 
-	    cv.imshow ("inputCanvas",dsp_org);	
+	    cv.imshow ("inputCanvas",dsp);	
 	    console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
-	
+	    dsp.delete();
         }
 
  };
@@ -418,7 +429,7 @@ function IsResize() {
 function DrawCircles(src,circles){
 	// draw circles
         let cnt = 0;
-	let hd = 25;
+	let hd = 70;
 
 	let dst = src.clone();
 	let h = dst.size().height;
@@ -467,12 +478,12 @@ function DrawCircles(src,circles){
 	var time = date.toLocaleTimeString();
 
         let pos1 = new cv.Point(10,20);
-	let pos2 = new cv.Point(10,30);
-        let pos3 = new cv.Point(10,40);
+	let pos2 = new cv.Point(10,40);
+        let pos3 = new cv.Point(10,60);
 
         cv.putText(dst ,"Count : "+ String (cnt), pos1,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize,[0,0,255,255],1);
-        //cv.putText(dst ,"Date/Time : " + n + "--"+time, pos2,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize,[0,0,0,255],1);
-	//cv.putText(dst ,"Comment : "+ txt_Comment, pos3 ,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize,[0,0,0,255],1);
+        cv.putText(dst ,"Date/Time : " + n + "--"+time, pos2,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize*0.75,[0,0,0,255],1);
+	cv.putText(dst ,"Comment : "+ txt_Comment, pos3 ,cv.FONT_HERSHEY_SIMPLEX,disp_fontsize*0.75,[0,0,0,255],1);
 
 	cv.imshow('imageCanvas', dst);
 	dst.delete();
@@ -525,9 +536,11 @@ document.getElementById('circlesButton').onclick = function() {
 	let circles = new cv.Mat();
 
 	cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY, 0);
-
+	cv.equalizeHist(mat, mat);
 	height = mat.size().height;
 	width = mat.size().width;
+
+	//cv.imshow('debugCanvas',mat);
 
 	let ksize = new cv.Size(5, 5);
 	// You can try more different parameters
@@ -627,7 +640,7 @@ function add_remove_circle(e) {
 		//context.arc(x, y, r, 0, 2*Math.PI);
 		//context.fill();
 		arrCircles.splice(i,1);	
-		DrawCircles(dst_org,arrCircles);	
+		DrawCircles(dsp_org.roi(rectROI),arrCircles);	
 		break;
 	}
    }
@@ -639,7 +652,7 @@ function add_remove_circle(e) {
 	newCircle["radius"] = ras;
 	newCircle["type"] = 0;
 	arrCircles.push(newCircle);
-	DrawCircles(dst_org,arrCircles);
+	DrawCircles(dsp_org.roi(rectROI),arrCircles);
    }else{
 	//do nothing
    }
