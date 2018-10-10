@@ -154,7 +154,7 @@ body.loading .modal {
 
 				</ul>
 				<div class="card-footer">
-				    <a href="#" id="button" class="btn btn-primary">Download Image</a>
+				    <a href="#" id="button">Download</a>
 				</div>
 			</div>
   		</div>
@@ -186,7 +186,7 @@ var last_mousex = last_mousey = 0;
 var mousex = mousey = 0;
 var mousedown = false;
 var rectROI;
-
+var click_state =0 ;
 
 function initDraw(canvas) {
     var mouse = {
@@ -258,36 +258,42 @@ function initDraw(canvas) {
         //ctx.lineWidth = 10;
         //ctx.stroke();
 	}
-	document.getElementById('mouse_result').innerHTML = "(" + String(last_mousex) + "," + String(last_mousey) + ") - (" + x + "," + y + ")";
+	//document.getElementById('mouse_result').innerHTML = "(" + String(last_mousex) + "," + String(last_mousey) + ") - (" + x + "," + y + ")";
 		
 
     }
     canvas.onclick = function (e) {
-        if (element !== null) {
-           // element = null;
-           // canvas.style.cursor = "default";
-          //  console.log("finsihed.");
-        } else {
-          //  console.log("begun.");
-         //   mouse.startX = mouse.x;
-          //  mouse.startY = mouse.y;
-          //  element = document.createElement('div');
-            //element.className = 'rectangle'
-            //element.style.left = mouse.x  - mouse.offSetX+ 'px';
-            //element.style.top = mouse.y  - mouse.offSetY+ 'px';
-            //canvas.appendChild(element)
-	   // let p1 = new cv.Point(e.pageX - mouse.offSetX);
-           // let p2 = new cv.Point(e.pageY - mouse.offSetY);
-	    //let dst = dsp_org.clone();
-	   // cv.rectangle(dst,p1,p2,[0,255,0,255],1);
-	    
-	   // cv.imshow('orgCanvas',dst);			
+	setMousePosition(e);
 
-	    //dst.delete();
-	   // p1.delete();
-	   // p2.delete();
-           // canvas.style.cursor = "crosshair";
+        if ( click_state == 0) {
+        	last_mousex = parseInt(e.pageX-mouse.offSetX);
+        	last_mousey = parseInt(e.pageY-mouse.offSetY);
+        	mousedown = true;
+		click_state = 1;
+
+	} else {
+		click_state = 0;
+		let x = e.pageX - mouse.offSetX;
+	        let y = e.pageY - mouse.offSetY;
+		
+		if ( ( x>last_mousex ) && (y>last_mousey)) {
+			var ctx = canvas.getContext('2d');
+        		ctx.clearRect(0,0,canvas.width,canvas.height); //clear canvas
+			let p1 = new cv.Point(last_mousex,last_mousey);
+		        let p2 = new cv.Point(x,y);
+        		let dsp = dsp_org.clone();
+        		cv.rectangle(dsp,p1,p2,[255,0,0,255],2);
+        
+      			rectROI = new cv.Rect(last_mousex,last_mousey, x - last_mousex, y - last_mousey);
+			cv.imshow('inputCanvas',dsp); 
+		        dsp.delete();
+
+		}
+		
         }
+
+	document.getElementById('mouse_result').innerHTML = "click_state = " + String(click_state) +"(" + String(last_mousex) + "," + String(last_mousey) + ") - (" + x + "," + y + ")";
+
     }
 }
 
@@ -371,7 +377,7 @@ function Img_zoomin(){
             let p1 = new cv.Point(rectROI.x,rectROI.y);
             let p2 = new cv.Point(rectROI.x + rectROI.width,rectROI.y + rectROI.height);
             let dsp = dsp_org.clone();
-	    cv.rectangle(dsp,p1,p2,[0,255,0,255],1);
+	    cv.rectangle(dsp,p1,p2,[255,0,0,255],2);
             cv.imshow ("inputCanvas",dsp);  
             console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
 	    dsp.delete();
@@ -406,7 +412,7 @@ function Img_zoomout(){
 	    let p1 = new cv.Point(rectROI.x,rectROI.y);
             let p2 = new cv.Point(rectROI.x + rectROI.width,rectROI.y + rectROI.height);
 	    let dsp = dsp_org.clone();
-            cv.rectangle(dsp,p1,p2,[0,255,0,255],1);
+            cv.rectangle(dsp,p1,p2,[255,0,0,255],2);
 
 	    cv.imshow ("inputCanvas",dsp);	
 	    console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
