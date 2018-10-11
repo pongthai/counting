@@ -12,6 +12,8 @@ let imgElement = document.getElementById('imageOriginal');
 let inputElement = document.getElementById('imageInput');
 let inputCanvas = document.getElementById('inputCanvas');
 let imageCanvas_header = document.getElementById("imageCanvas_header");
+let imageCanvas_combine = document.getElementById("imageCanvas_combine");
+
 
 let mat;
 let arrCircles;
@@ -212,6 +214,8 @@ canvas.onclick = function (e) {
   let ctext = imageCanvas.getContext('2d');
   ctext.clearRect(0,0,imageCanvas.width,imageCanvas.height);
 
+  imageCanvas_combine.style.display="none";
+
 
   initDraw(document.getElementById('inputCanvas'));
 
@@ -365,6 +369,16 @@ function Img_zoomin(){
   ctx.fillText("Comment : "+ txt_Comment,10,60);
 
   cv.imshow('imageCanvas', dst);
+
+  var ctx_combine = imageCanvas_combine.getContext("2d");
+  ctx_combine.clearRect(0,0,imageCanvas_combine.width,imageCanvas_combine.height);
+
+  imageCanvas_combine.width = imageCanvas.width;
+  imageCanvas_combine.height = imageCanvas_header.height+imageCanvas.height;
+
+  ctx_combine.drawImage(imageCanvas_header,0,0);
+  ctx_combine.drawImage(imageCanvas,0,imageCanvas_header.height);
+
   dst.delete();
 
 }
@@ -376,6 +390,7 @@ document.getElementById('circlesButton').onclick = function() {
 	document.getElementById('lbl_status').innerHTML = "<span style='color:#FF0000'> Processing...</span>";
 	imageCanvas.style.cursor="progress";
 	setTimeout(function(){ processCircleDetection(); }, 10);
+
 }
 
 function processCircleDetection()
@@ -504,7 +519,7 @@ function processCircleDetection()
 };
 
 document.getElementById('button').onclick = function() {
-  this.href = document.getElementById("imageCanvas").toDataURL();
+  this.href = document.getElementById("imageCanvas_combine").toDataURL("image/png");
   this.download = "image.png";
 };
 
