@@ -144,10 +144,7 @@ body.loading .modal {
 										<td>Line width</td>
 										<td> <input type="text" id="txt_linew" value="1" size="4"></td>
 									</tr>
-									<tr>
-										<td>Min Dist</td>
-										<td><input type="text" id="txt_mindist" value="20" size="4"></td>	
-									</tr>
+									
 									<tr>	
 										<td>Param1</td>
 										<td><input type="text" id="txt_param1" value="150" size="4"></td>	
@@ -158,12 +155,19 @@ body.loading .modal {
 										<td><input type="text" id="txt_param2" value="15" size="4"></td>
 									</tr>
 									<tr>
+										<td>Min Dist</td>
+										<td><input type="text" id="txt_mindist" value="20" size="4" onchange="minDist_txtChange(this.value)"><input type="range" min="1" max="100" value="20" class="slider" id="rangeMinDist">
+										</td>	
+									</tr>
+									<tr>
 										<td>Min Radius</td>
-										<td><input type="text" id="txt_minRas" value="15" size="4"></td>
+										<td><input type="text" id="txt_minRas" value="15" size="4" onchange="minRas_txtChange(this.value)"><input type="range" min="1" max="100" value="15" class="slider" id="rangeMinRas">
+										</td>
 									</tr>
 									<tr>
 										<td>Max Radius</td>
-										<td><input type="text" id="txt_maxRas" value="25" size="4"></td>
+										<td><input type="text" id="txt_maxRas" value="25" size="4" onchange="maxRas_txtChange(this.value)"><input type="range" min="1" max="100" value="25" class="slider" id="rangeMaxRas">
+										</td>
 									</tr>
 									<tr style="visibility: hidden">
 										<td><input type="checkbox" id="Chk_Resize"><b>Scale Image</b> 

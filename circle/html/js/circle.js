@@ -14,6 +14,10 @@ let inputCanvas = document.getElementById('inputCanvas');
 let imageCanvas_header = document.getElementById("imageCanvas_header");
 let imageCanvas_combine = document.getElementById("imageCanvas_combine");
 
+let rangeMinDist = document.getElementById("rangeMinDist");
+let rangeMinRas = document.getElementById("rangeMinRas");
+let rangeMaxRas = document.getElementById("rangeMaxRas");
+
 
 let mat;
 let arrCircles;
@@ -129,6 +133,7 @@ function initDraw(canvas) {
 
 
 }
+
 canvas.onclick = function (e) {
   setMousePosition(e);
 
@@ -160,6 +165,40 @@ canvas.onclick = function (e) {
       }
     }
   }
+
+
+rangeMinDist.oninput = function() {
+
+    document.getElementById('txt_mindist').value = this.value;
+}
+
+rangeMinRas.oninput = function() {
+  
+    document.getElementById('txt_minRas').value = this.value;
+
+}
+
+rangeMaxRas.oninput = function() {
+  
+    document.getElementById('txt_maxRas').value = this.value;    
+}
+
+function minDist_txtChange(val){
+  rangeMinDist.value = val;
+
+}
+
+function minRas_txtChange(val){
+  rangeMinRas.value = val;
+
+
+}
+
+function maxRas_txtChange(val){
+  rangeMaxRas.value = val;
+}
+
+
 
 
 
