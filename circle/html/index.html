@@ -49,8 +49,6 @@ body.loading .modal {
 		</div>
 
 		<div class="row">
-		</div>
-		<div class="row">
 			<div class="col-sm">
 				<div class="card">
 					<div id="navbar">
@@ -85,11 +83,20 @@ body.loading .modal {
 
 				</div>
 			</div>
+		</div>	
+		<div class="row">	
 			<div class="col-sm">
 				<div class="card">
 					<div class="card-header">
 						Modified Image
 					</div>
+					<ul class="list-group list-group-flush">
+						<li class="list-group-item">
+							<button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
+							<label id="lbl_status">..</label>
+						</li>
+					</ul>
+
 					<div class="card-block">
 
 						<canvas id="imageCanvas_header"></canvas><br>
@@ -98,12 +105,12 @@ body.loading .modal {
 						<canvas id="imageCanvas_combine"></canvas><br>
 
 					</div>
+					<div class="card-footer">
+						<a href="#" id="button">Download</a>
+					</div>
 
 					<ul class="list-group list-group-flush">
-						<li class="list-group-item">
-							<button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
-							<label id="lbl_status">..</label>
-						</li>
+						
 
 						<div class="card">
 							<div class="card-header">
@@ -132,14 +139,39 @@ body.loading .modal {
 								Parameters
 							</div>
 							<div class="card-block text-left">
-								<b>line width</b>:<input type="text" id="txt_linew" value="1" size="4"><br>
-								<b>min dist</b>: <input type="text" id="txt_mindist" value="20" size="4"><br>
-								<b>Param1</b>: <input type="text" id="txt_param1" value="150" size="4" ><br>
-								<b>Param2</b>: <input type="text" id="txt_param2" value="15" size="4"><br>
-								<b>min Radius</b>: <input type="text" id="txt_minRas" value="15" size="4"><br>
-								<b>max Radius</b>: <input type="text" id="txt_maxRas" value="25" size="4"><br>
-								<input type="checkbox" id="Chk_Resize"><b>Scale Image</b> 
-								<b>Scale (0.1-1.0)</b>: <input type="text" id="txt_Scale" value="0.5" size="4"><br>
+								<table border="1">
+									<tr>
+										<td>Line width</td>
+										<td> <input type="text" id="txt_linew" value="1" size="4"></td>
+									</tr>
+									<tr>
+										<td>Min Dist</td>
+										<td><input type="text" id="txt_mindist" value="20" size="4"></td>	
+									</tr>
+									<tr>	
+										<td>Param1</td>
+										<td><input type="text" id="txt_param1" value="150" size="4"></td>	
+								
+									</tr>
+									<tr>
+										<td>Param2</td>
+										<td><input type="text" id="txt_param2" value="15" size="4"></td>
+									</tr>
+									<tr>
+										<td>Min Radius</td>
+										<td><input type="text" id="txt_minRas" value="15" size="4"></td>
+									</tr>
+									<tr>
+										<td>Max Radius</td>
+										<td><input type="text" id="txt_maxRas" value="25" size="4"></td>
+									</tr>
+									<tr style="visibility: hidden">
+										<td><input type="checkbox" id="Chk_Resize"><b>Scale Image</b> 
+								<b><br>Scale (0.1-1.0)</b></td>
+										<td><input type="text" id="txt_Scale" value="0.5" size="4"></td>
+									</tr>
+
+								</table>
 
 							</div>
 							</div
@@ -148,16 +180,21 @@ body.loading .modal {
 									Output Display
 								</div>
 								<div class="card-block text-left">
-									<b>Font Size</b>:<input type="text" id="txt_disp_fontsize" value="15" size="4"><br>
-									<b>Comment Text</b>: <input type="text" id="txt_Comment" value="" size="50"><br>
+									<table border="1">
+										<tr>
+											<td>Font Size</td><td><input type="text" id="txt_disp_fontsize" value="15" size="4"></td>
+
+										</tr>
+										<tr>
+											<td>Comment Text</td>
+											<td> <textarea id="txt_Comment" value="" cols="40" rows="3"></textarea></td>
+								</table>
 								</div>
 							</div>
 
 
 						</ul>
-						<div class="card-footer">
-							<a href="#" id="button">Download</a>
-						</div>
+					
 					</div>
 				</div>
 			</div>
