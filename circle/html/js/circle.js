@@ -633,7 +633,7 @@ console.log( "mat = (" + width + "," +height + ")") ;
 
   cv.erode(mat,mat,M,anchor, 1,cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
   
-  cv.imshow('debugCanvas',mat);
+  //cv.imshow('debugCanvas',mat);
 
 	var minDist = parseInt(document.getElementById("txt_mindist").value);
 	var param1 = parseInt(document.getElementById("txt_param1").value);
