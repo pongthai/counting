@@ -233,8 +233,8 @@ function maxRas_txtChange(val){
 
   cv.imshow('imageCanvas', mat);
   */
-  document.getElementById('circlesButton').disabled = false;
-  document.getElementById('lbl_status').innerHTML = "Ready";
+  ChangeCircleButtonState(0); //Ready
+
   imgElement.style.cursor="crosshair";
 
   //if (dst_org != null) dst_org.delete();
@@ -242,9 +242,11 @@ function maxRas_txtChange(val){
   dst_org = cv.imread(imgElement);
   dsp_org = dst_org.clone();
   cv.imshow('inputCanvas',dst_org);
-  zoom_factor = dst_org.size().width/imgElement.style.width;
-
+  
+  //zoom_factor = dst_org.size().width/imgElement.style.width;
+  zoom_factor = 1.0;
   rectROI = new cv.Rect(0,0,dst_org.size().width,dst_org.size().height);
+
   imageCanvas.width = 50;
   imageCanvas.height = 50;
   imageCanvas_header.width = 800;
@@ -284,8 +286,7 @@ function Img_zoomin(){
            let dsp = dsp_org.clone();
            cv.rectangle(dsp,p1,p2,[255,0,0,255],2);
            cv.imshow ("inputCanvas",dsp);  
-           console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
-           dsp.delete();
+           console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale + " (" + rectROI.width+","+rectROI.height + "," + zoom_factor,")");           dsp.delete();
 
 
          }
@@ -320,7 +321,7 @@ function Img_zoomin(){
       cv.rectangle(dsp,p1,p2,[255,0,0,255],2);
 
       cv.imshow ("inputCanvas",dsp);	
-      console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale);
+      console.log("newWidth ="+newWidth+" newHeight="+newHeight + "scale = " + scale + " (" + rectROI.width+","+rectROI.height + "," + zoom_factor,")");
       dsp.delete();
     }
 
@@ -354,9 +355,9 @@ function Img_zoomin(){
 	let disp_fontsize = parseFloat(document.getElementById("txt_disp_fontsize").value);
 	let txt_Comment = document.getElementById("txt_Comment").value;
   for (let i = 0; i < circles.length; ++i) {
-   let x = circles[i]["x"];
-   let y = circles[i]["y"];
-   let radius = circles[i]["radius"];
+   let x = Math.round (circles[i]["x"]/zoom_factor);
+   let y = Math.round (circles[i]["y"]/zoom_factor);
+   let radius = Math.round (circles[i]["radius"]/zoom_factor);
    let type = circles[i]["type"];
 
    let center = new cv.Point(x, y);
@@ -370,7 +371,8 @@ function Img_zoomin(){
 
    cnt = cnt+1;
    let p1 = new cv.Point(x,y);
-   cv.putText(dst,String(cnt)+"/"+String(Math.round(radius)), p1,cv.FONT_HERSHEY_TRIPLEX,0.3,[255,255,255,255],1);
+   cv.putText(dst,String(Math.round(radius*zoom_factor)), p1,cv.FONT_HERSHEY_TRIPLEX,0.3,[255,255,255,255],1);
+
  }
         //clear header
 /*        for (let i = 0; i < hd; i++) {
@@ -425,12 +427,139 @@ function Img_zoomin(){
 document.getElementById('circlesButton').onclick = function() {
 	
 	//this.disabled = true;
-	document.getElementById('circlesButton').disabled = true;
-	document.getElementById('lbl_status').innerHTML = "<span style='color:#FF0000'> Processing...</span>";
-	imageCanvas.style.cursor="progress";
+  ChangeCircleButtonState(1); //Processing;
+
 	setTimeout(function(){ processCircleDetection(); }, 10);
 
 }
+
+document.getElementById('circlesButton2').onclick = function() {
+  
+  //this.disabled = true;
+  
+  ChangeCircleButtonState(1); //Processing;
+
+  setTimeout(function(){ processCircleDetection(); }, 10);
+
+}
+
+function ChangeCircleButtonState(val)
+{
+
+  if (val == 0)
+  {
+    document.getElementById('circlesButton').disabled = false;
+    document.getElementById('lbl_status').innerHTML = "Ready";
+    document.getElementById('lbl_status2').innerHTML = "Ready";
+    document.getElementById('circlesButton').value = "Circle Detection";
+
+    document.getElementById("imageCanvas").style.cursor="pointer";
+
+  }else{
+    document.getElementById('circlesButton').disabled = true;
+    document.getElementById('lbl_status').innerHTML = "<span style='color:#FF0000'> Processing...</span>";
+    document.getElementById('lbl_status2').innerHTML = "<span style='color:#FF0000'> Processing...</span>";
+    document.getElementById('circlesButton').value = "Processing";
+    imageCanvas.style.cursor="progress";
+    
+
+  }
+
+  
+
+}
+
+function processCircleDetection2()
+
+{
+
+  let t0 = performance.now();
+
+  //reset array Circles
+  arrCircles = [];
+
+  //let mat = cv.imread(imgElement);
+  let mat = dsp_org.roi(rectROI);
+
+ height = mat.size().height;
+ width = mat.size().width;
+
+
+ let scale = parseFloat(document.getElementById("txt_Scale").value);
+
+ let chkResize = document.getElementById("Chk_Resize");
+ if ( chkResize.checked){
+  Img_scale = scale;
+
+    let dsize = new cv.Size(Math.round(width*scale), Math.round(height*scale));
+    cv.resize(mat, mat, dsize, 0, 0, cv.INTER_AREA);
+
+  }else{
+    Img_scale = 1.0;
+  }
+
+  cv.imshow('imageCanvas', mat);
+
+    //let mat = cv.imread('imageCanvas');
+  //dst_org = mat.clone();
+  let circles = new cv.Mat();
+
+  cv.cvtColor(mat, mat, cv.COLOR_RGBA2GRAY, 0);
+  cv.equalizeHist(mat, mat);
+  height = mat.size().height;
+  width = mat.size().width;
+
+  //cv.imshow('debugCanvas',mat);
+
+  let ksize = new cv.Size(5, 5);
+  // You can try more different parameters
+  cv.GaussianBlur(mat, mat, ksize, 0, 0, cv.BORDER_DEFAULT);
+  cv.medianBlur(mat, mat, 5);
+
+  let anchor = new cv.Point(-1, -1);
+
+  let el = cv.getStructuringElement(cv.MORPH_ELLIPSE, ksize);
+  cv.dilate(mat,mat,el,anchor, 6,cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+  cv.findContours(mat, contours, hierarchy, cv.RETR_LIST, cv.CHAIN_APPROX_SIMPL);
+
+  var minDist = parseInt(document.getElementById("txt_mindist").value);
+  var param1 = parseInt(document.getElementById("txt_param1").value);
+  var param2 = parseInt(document.getElementById("txt_param2").value);
+  var minRas = parseInt(document.getElementById("txt_minRas").value);
+  var maxRas = parseInt(document.getElementById("txt_maxRas").value);
+
+
+  document.getElementById('circlesButton').disabled = true;
+  
+  for (let i = 0; i < circles.cols; i++){
+    let circle = [];
+
+    circle["x"] = circles.data32F[i * 3];
+   circle["y"] = circles.data32F[i * 3 + 1];
+   circle["radius"] = circles.data32F[i * 3 + 2];
+    circle["type"] = 1; //1 = auto, 0 = manual
+
+    arrCircles.push(circle);
+  }
+
+  let t1 = performance.now();
+
+  last_processing_time = (t1-t0)/1000; //in sec.
+
+  // draw circles
+  DrawCircles(dsp_org.roi(rectROI),arrCircles); 
+
+  
+  ChangeCircleButtonState(0); //Ready
+
+  
+  mat.delete();
+  circles.delete();
+
+};
 
 function processCircleDetection()
 
@@ -442,10 +571,16 @@ function processCircleDetection()
 	arrCircles = [];
 
 	//let mat = cv.imread(imgElement);
-	let mat = dsp_org.roi(rectROI);
+console.log( "rectROI = (" + rectROI.x + "," + rectROI.y + "," +rectROI.width + "," + rectROI.height + ") - zoom_factor = " + zoom_factor) ;
+
+let org_rectROI = new cv.Rect (parseInt(rectROI.x*zoom_factor),parseInt(rectROI.y*zoom_factor),parseInt(rectROI.width*zoom_factor),parseInt(rectROI.height*zoom_factor));
+console.log( "org_rectROI = (" + org_rectROI.x + "," + org_rectROI.y + "," +org_rectROI.width + "," + org_rectROI.height + ")") ;
+let mat = dst_org.roi(org_rectROI);
 
  height = mat.size().height;
  width = mat.size().width;
+
+console.log( "mat = (" + width + "," +height + ")") ;
 
 
  let scale = parseFloat(document.getElementById("txt_Scale").value);
@@ -484,12 +619,21 @@ function processCircleDetection()
 	height = mat.size().height;
 	width = mat.size().width;
 
-	//cv.imshow('debugCanvas',mat);
+	
 
 	let ksize = new cv.Size(5, 5);
 	// You can try more different parameters
 	cv.GaussianBlur(mat, mat, ksize, 0, 0, cv.BORDER_DEFAULT);
-	cv.medianBlur(mat, mat, 5);
+	//cv.medianBlur(mat, mat, 5);
+  let M = cv.Mat.ones(5, 5, cv.CV_8U);
+  let anchor = new cv.Point(-1, -1);
+
+  let el = cv.getStructuringElement(cv.MORPH_ELLIPSE, ksize);
+  cv.dilate(mat,mat,M,anchor, 1,cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+
+  cv.erode(mat,mat,M,anchor, 1,cv.BORDER_CONSTANT, cv.morphologyDefaultBorderValue());
+  
+  cv.imshow('debugCanvas',mat);
 
 	var minDist = parseInt(document.getElementById("txt_mindist").value);
 	var param1 = parseInt(document.getElementById("txt_param1").value);
@@ -501,7 +645,7 @@ function processCircleDetection()
 	cv.HoughCircles(mat, circles, cv.HOUGH_GRADIENT,
     1, minDist,  param1,param2, minRas, maxRas);
 
-	document.getElementById('circlesButton').disabled = true;
+	//document.getElementById('circlesButton').disabled = true;
 	//document.getElementById('lbl_status').innerHTML = "Processing...";
 	//document.getElementById("imageCanvas").style.cursor="crosshair";
 	
@@ -542,11 +686,8 @@ function processCircleDetection()
 	cv.putText(dst,"("+ String(height)+","+String(width)+") : " + "Count = "+ String (cnt), p2,cv.FONT_HERSHEY_SIMPLEX,0.5,[255,255,255,255],1)
 	cv.imshow('imageCanvas', dst);
 	*/
-	document.getElementById('circlesButton').disabled = false;
-	document.getElementById('lbl_status').innerHTML = "Ready";
-	document.getElementById("imageCanvas").style.cursor="pointer";
 
-
+  ChangeCircleButtonState(0);//Ready
 	
 	mat.delete();
 	circles.delete();
@@ -573,8 +714,8 @@ function add_remove_circle(e) {
   var context = canvas.getContext("2d"); 
   let ras = parseInt(document.getElementById('txt_radius').value);
   var pos = getMousePos(canvas, e);
-  posx = pos.x;
-  posy = pos.y;
+  posx = pos.x*zoom_factor;
+  posy = pos.y*zoom_factor;
 
   var RadAddRemove = document.getElementById('rad_action');
 
