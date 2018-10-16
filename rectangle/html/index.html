@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Rectangle Detection v0.1.0</title>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb" crossorigin="anonymous">
+
+
+<style type="text/css">
+	/* Start by setting display:none to make this hidden.
+   Then we position it in relation to the viewport window
+   with position:fixed. Width, height, top and left speak
+   for themselves. Background we set to 80% white with
+   our animation centered, and no-repeating */
+.modal {
+    display:    none;
+    position:   fixed;
+    z-index:    1000
+    top:        0;
+    left:       0;
+    height:     100%;
+    width:      100%;
+    background: rgba( 255, 255, 255, .8 ) 
+                url('http://i.stack.imgur.com/FhHRx.gif') 
+                50% 50% 
+                no-repeat;
+}
+
+/* When the body has the loading class, we turn
+   the scrollbar off with overflow:hidden */
+body.loading {
+    overflow: hidden;   
+}
+
+/* Anytime the body has the loading class, our
+   modal element will be visible */
+body.loading .modal {
+    display: block;
+}
+
+.slider {
+    width: 100%;  
+}
+
+
+
+</style>
+</head>
+<body>
+	<div class="container">
+		<div class="jumbotron">
+			<h3>Retangle Detection v0.1.0</h3> 
+			<p>This is a prototype of Rectangle Detection</p> 
+		</div>
+
+		<div class="row">
+			<div class="col-sm">
+				<div class="card">
+					<div id="navbar">
+						<button type="button" onclick="Img_zoomin()"><img src="./images/zoomin.png" width="50%" height="50%"  /></button>
+						<button type="button" onclick="Img_zoomout()"><img src="./images/zoomout.png" width="50%" height="50%" /></button>
+					</div>
+
+					<div class="card-header">
+						Original Image
+					</div>
+					<div class="card-block">
+						<canvas id="orgCanvas" width ="0" height = "0"></canvas>
+					</div>
+					<div>
+						<img id="imageOriginal" style="display: none;" />
+					</div>
+					<div>
+						<canvas id="inputCanvas" width ="0" height = "0"></canvas>
+
+					</div>
+					<div> <label id="mouse_result"></label>  </div>			
+					<div class="card-footer text-muted">
+						<input type="file" id="imageInput" name="file" />
+					</div>
+				</div>
+			</div>
+			<div style="visibility: hidden;">
+				<div style="visibility: hidden;">
+					<div  style="visibility: hidden;">
+						<canvas id="debugCanvas" width="0" height="0"></canvas>
+					</div>
+
+				</div>
+			</div>
+		</div>	
+		<div class="row">	
+			<div class="col-sm">
+				<div class="card">
+					<div class="card-header">
+						Modified Image
+					</div>
+					<ul class="list-group list-group-flush">
+						<li class="list-group-item">
+							<button type="button" id="circlesButton" class="btn btn-primary">Circle Detection</button>
+							<label id="lbl_status">..</label>
+						</li>
+					</ul>
+
+					<div class="card-block">
+
+						<canvas id="imageCanvas_header"></canvas><br>
+						<canvas id="imageCanvas" onclick="add_remove_circle(event)"></canvas><br>
+						
+						<canvas id="imageCanvas_combine"></canvas><br>
+
+					</div>
+					<div class="card-footer">
+						<a href="#" id="button">Download</a>
+					</div>
+
+					<ul class="list-group list-group-flush">
+						
+
+						<div class="card">
+							<div class="card-header">
+								Add/Remove
+							</div>
+							<div class="card-block text-left">
+								<b>Radius</b>: <input type="text" id="txt_radius" value="20" size="3"><br>
+								<label >
+									<input type="radio" checked="checked" name="radio" id="rad_none">
+									<span >None</span>
+								</label>
+								<br>
+								<label >
+									<input type="radio" name="radio" id="rad_add">
+									<span >Add Circle</span>
+								</label>
+								<br>
+								<label >
+									<input type="radio" name="radio" id="rad_remove">
+									<span >Remove Circle</span>
+								</label>
+							</div>							
+						</div>
+						<div class="card">
+							<div class="card-header">
+								Parameters
+							</div>
+							<div class="card-block text-left">
+								<table border="1">
+									<tr>
+										<td >Line width</td>
+										<td > <input type="text" id="txt_linew" value="1" size="4"></td>
+									</tr>
+									
+									<tr>	
+										<td>Param1</td>
+										<td><input type="text" id="txt_param1" value="150" size="4"></td>	
+								
+									</tr>
+									<tr>
+										<td>Param2</td>
+										<td><input type="text" id="txt_param2" value="15" size="4"></td>
+									</tr>
+									<tr>
+										<td>Min Dist</td>
+										<td width="500px"><input type="text" id="txt_mindist" value="20" size="4" onchange="minDist_txtChange(this.value)"><input type="range" min="1" max="100" value="20" class="slider" id="rangeMinDist" class="slider">
+										</td>	
+									</tr>
+									<tr>
+										<td>Min Radius</td>
+										<td><input type="text" id="txt_minRas" value="15" size="4" onchange="minRas_txtChange(this.value)"><input type="range" min="1" max="100" value="15" class="slider" id="rangeMinRas" class="slider">
+										</td>
+									</tr>
+									<tr>
+										<td>Max Radius</td>
+										<td><input type="text" id="txt_maxRas" value="25" size="4" onchange="maxRas_txtChange(this.value)"><input type="range" min="1" max="100" value="25" class="slider" id="rangeMaxRas" class="slider">
+										</td>
+									</tr>
+									</tr>
+
+									<tr style="visibility: hidden">
+										<td><input type="checkbox" id="Chk_Resize"><b>Scale Image</b> 
+								<b><br>Scale (0.1-1.0)</b></td>
+										<td><input type="text" id="txt_Scale" value="0.5" size="4"></td>
+									
+
+								</table>
+								<table>
+									<tr><td><button type="button" id="circlesButton2" class="btn btn-primary">Circle Detection</button>
+										<label id="lbl_status2">..</label></td></tr>
+
+								</table>
+								
+
+							</div>
+							</div
+							<div class="card">
+								<div class="card-header">
+									Output Display
+								</div>
+								<div class="card-block text-left">
+									<table border="1">
+										<tr>
+											<td>Font Size</td><td><input type="text" id="txt_disp_fontsize" value="15" size="4"></td>
+
+										</tr>
+										<tr>
+											<td>Comment Text</td>
+											<td> <textarea id="txt_Comment" value="" cols="40" rows="3"></textarea></td>
+								</table>
+								</div>
+							</div>
+
+
+						</ul>
+					
+					</div>
+				</div>
+			</div>
+		</div>
+		<div class="modal"></div>
+
+		<script async src="https://docs.opencv.org/master/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+
+		<script src="js/circle.js"></script>
+
+	</body>
+</html>
