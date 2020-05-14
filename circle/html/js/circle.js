@@ -198,16 +198,21 @@ function maxRas_txtChange(val){
   rangeMaxRas.value = val;
 }
 
-
-
-
-
-
   document.body.classList.add("loading");
 
 
   inputElement.addEventListener('change', (e) => {
-    imgElement.src = URL.createObjectURL(e.target.files[0]);
+   
+    var isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    if (isMobile)
+    {
+      imgElement.src = URL.createObjectURL(e.target.toDataURL);
+    }else
+    {
+      imgElement.src = URL.createObjectURL(e.target.files[0]);
+    }
+  
+      
   }, false);
 
 
